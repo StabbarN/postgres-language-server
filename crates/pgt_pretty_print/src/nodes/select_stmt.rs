@@ -31,5 +31,14 @@ pub(super) fn emit_select_stmt(e: &mut EventEmitter, n: &SelectStmt) {
         e.indent_end();
     }
 
+    if let Some(ref where_clause) = n.where_clause {
+        e.line(LineType::SoftOrSpace);
+        e.token(TokenKind::WHERE_KW);
+        e.space();
+        super::emit_node(where_clause, e);
+    }
+
+    e.token(TokenKind::SEMICOLON);
+
     e.group_end();
 }
