@@ -15,5 +15,11 @@ pub(super) fn emit_range_var(e: &mut EventEmitter, n: &RangeVar) {
 
     e.token(TokenKind::IDENT(n.relname.clone()));
 
+    // Emit alias if present
+    if let Some(ref alias) = n.alias {
+        e.space();
+        super::emit_alias(e, alias);
+    }
+
     e.group_end();
 }

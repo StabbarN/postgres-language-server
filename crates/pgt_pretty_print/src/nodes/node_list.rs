@@ -39,3 +39,29 @@ pub(super) fn emit_keyword_separated_list(
         super::emit_node(n, e);
     }
 }
+
+#[allow(dead_code)]
+pub(super) fn emit_space_separated_list<F>(e: &mut EventEmitter, nodes: &[Node], render: F)
+where
+    F: Fn(&Node, &mut EventEmitter),
+{
+    for (i, n) in nodes.iter().enumerate() {
+        if i > 0 {
+            e.space();
+        }
+        render(n, e);
+    }
+}
+
+pub(super) fn emit_semicolon_separated_list<F>(e: &mut EventEmitter, nodes: &[Node], render: F)
+where
+    F: Fn(&Node, &mut EventEmitter),
+{
+    for (i, n) in nodes.iter().enumerate() {
+        if i > 0 {
+            e.token(TokenKind::SEMICOLON);
+            e.line(LineType::SoftOrSpace);
+        }
+        render(n, e);
+    }
+}

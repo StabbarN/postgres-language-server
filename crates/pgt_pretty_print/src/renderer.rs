@@ -61,7 +61,7 @@ impl<W: Write> Renderer<W> {
                     i += 1;
                 }
                 LayoutEvent::Line(line_type) => {
-                    self.handle_line(&line_type)?;
+                    self.handle_line(line_type)?;
                     i += 1;
                 }
                 LayoutEvent::GroupStart { .. } => {

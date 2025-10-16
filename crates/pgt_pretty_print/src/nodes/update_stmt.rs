@@ -1,4 +1,4 @@
-use pgt_query::protobuf::{ResTarget, UpdateStmt};
+use pgt_query::protobuf::UpdateStmt;
 
 use crate::TokenKind;
 use crate::emitter::{EventEmitter, GroupKind};
@@ -8,6 +8,14 @@ use super::emit_node;
 use super::node_list::emit_comma_separated_list;
 
 pub(super) fn emit_update_stmt(e: &mut EventEmitter, n: &UpdateStmt) {
+    emit_update_stmt_impl(e, n, true);
+}
+
+pub(super) fn emit_update_stmt_no_semicolon(e: &mut EventEmitter, n: &UpdateStmt) {
+    emit_update_stmt_impl(e, n, false);
+}
+
+fn emit_update_stmt_impl(e: &mut EventEmitter, n: &UpdateStmt, with_semicolon: bool) {
     e.group_start(GroupKind::UpdateStmt);
 
     e.token(TokenKind::UPDATE_KW);
@@ -33,7 +41,9 @@ pub(super) fn emit_update_stmt(e: &mut EventEmitter, n: &UpdateStmt) {
         emit_node(where_clause, e);
     }
 
-    e.token(TokenKind::SEMICOLON);
+    if with_semicolon {
+        e.token(TokenKind::SEMICOLON);
+    }
 
     e.group_end();
 }
