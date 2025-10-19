@@ -11,8 +11,7 @@ pub(super) fn emit_create_role_stmt(e: &mut EventEmitter, n: &CreateRoleStmt) {
     e.token(TokenKind::CREATE_KW);
     e.space();
 
-    let stmt_type = RoleStmtType::try_from(n.stmt_type).unwrap_or(RoleStmtType::Undefined);
-    match stmt_type {
+    match n.stmt_type() {
         RoleStmtType::RolestmtRole => e.token(TokenKind::ROLE_KW),
         RoleStmtType::RolestmtUser => e.token(TokenKind::USER_KW),
         RoleStmtType::RolestmtGroup => e.token(TokenKind::GROUP_KW),

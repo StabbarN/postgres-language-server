@@ -701,7 +701,7 @@ pub(super) fn emit_select_stmt(e: &mut EventEmitter, n: &SelectStmt) {
 }
 ```
 
-### Completed Nodes (180/270) - Last Updated 2025-10-18 Session 49
+### Completed Nodes (192/270) - Last Updated 2025-10-20 Session 56
 - [x] AArrayExpr (array literals ARRAY[...])
 - [x] AConst (with all variants: Integer, Float, Boolean, String, BitString)
 - [x] AExpr (partial - basic binary operators)
@@ -710,6 +710,7 @@ pub(super) fn emit_select_stmt(e: &mut EventEmitter, n: &SelectStmt) {
 - [x] AStar
 - [x] AccessPriv (helper for GRANT/REVOKE privilege specifications)
 - [x] Alias (AS aliasname with optional column list, fixed to not quote simple identifiers)
+- [x] Aggref (planner aggregate nodes routed through the deparse bridge with guarded fallback)
 - [x] AlterCollationStmt (ALTER COLLATION REFRESH VERSION)
 - [x] AlterDatabaseStmt (ALTER DATABASE with options)
 - [x] AlterDatabaseSetStmt (ALTER DATABASE SET configuration parameters)
@@ -737,6 +738,7 @@ pub(super) fn emit_select_stmt(e: &mut EventEmitter, n: &SelectStmt) {
 - [x] AlterSubscriptionStmt (ALTER SUBSCRIPTION with 8 operation kinds)
 - [x] AlterSystemStmt (ALTER SYSTEM wraps VariableSetStmt)
 - [x] AlterTableStmt (ALTER TABLE with multiple subcommands: ADD COLUMN, DROP COLUMN, ALTER COLUMN, SET/DROP DEFAULT, ADD/DROP CONSTRAINT, etc.)
+- [x] AlterTableCmd (standalone ALTER TABLE subcommands; shares formatting with AlterTableStmt dispatcher)
 - [x] AlterTableMoveAllStmt (ALTER TABLE ALL IN TABLESPACE ... SET TABLESPACE ...)
 - [x] AlterTableSpaceOptionsStmt (ALTER TABLESPACE with SET/RESET options)
 - [x] AlterTsconfigurationStmt (ALTER TEXT SEARCH CONFIGURATION with ADD/ALTER/DROP MAPPING)
@@ -802,6 +804,7 @@ pub(super) fn emit_select_stmt(e: &mut EventEmitter, n: &SelectStmt) {
 - [x] DefElem (option name = value for WITH clauses)
 - [x] DeleteStmt (DELETE FROM ... [USING ...] [WHERE ...] [RETURNING ...] with WITH clause support)
 - [x] DiscardStmt (DISCARD ALL|PLANS|SEQUENCES|TEMP)
+- [x] DistinctExpr (planner form of IS DISTINCT FROM emitted via deparse to recover operator tokens)
 - [x] DoStmt (DO language block)
 - [x] DropStmt (DROP object_type [IF EXISTS] objects [CASCADE])
 - [x] DropOwnedStmt (DROP OWNED BY roles [CASCADE|RESTRICT])
@@ -817,6 +820,8 @@ pub(super) fn emit_select_stmt(e: &mut EventEmitter, n: &SelectStmt) {
 - [x] FieldStore (composite field assignment wrapper that reuses the inner expression)
 - [x] Float
 - [x] FuncCall (comprehensive - basic function calls, special SQL standard functions with FROM/IN/PLACING syntax: EXTRACT, OVERLAY, POSITION, SUBSTRING, TRIM, TODO: WITHIN GROUP, FILTER)
+- [x] FuncExpr (planner function invocation routed through the deparse bridge with placeholder `func#oid(...)` fallback)
+- [x] FunctionParameter (CREATE FUNCTION parameters with mode keywords, identifiers, types, and DEFAULT clauses)
 - [x] GrantStmt (GRANT/REVOKE privileges ON objects TO/FROM grantees, with options)
 - [x] GrantRoleStmt (GRANT/REVOKE roles TO/FROM grantees WITH options GRANTED BY grantor)
 - [x] GroupingFunc (GROUPING(columns) for GROUP BY GROUPING SETS)
@@ -843,8 +848,10 @@ pub(super) fn emit_select_stmt(e: &mut EventEmitter, n: &SelectStmt) {
 - [x] NamedArgExpr (named arguments: name := value)
 - [x] NotifyStmt (NOTIFY channel with optional payload)
 - [x] NullTest (IS NULL / IS NOT NULL)
+- [x] NullIfExpr (planner NULLIF variant forwarded through deparse to reconstruct function form)
 - [x] ObjectWithArgs (function/operator names with argument types)
 - [x] OnConflictClause (ON CONFLICT DO NOTHING/DO UPDATE with target inference and optional WHERE clause)
+- [x] OpExpr (planner operator expression reconstructed via deparse to recover operator symbol)
 - [x] ParamRef (prepared statement parameters $1, $2, etc.)
 - [x] PartitionElem (column/expression in PARTITION BY clause with optional COLLATE and opclass)
 - [x] PartitionSpec (PARTITION BY RANGE/LIST/HASH with partition parameters)
@@ -875,6 +882,8 @@ pub(super) fn emit_select_stmt(e: &mut EventEmitter, n: &SelectStmt) {
 - [x] SqlValueFunction (CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, etc.)
 - [x] String (identifier and literal contexts)
 - [x] SubLink (all sublink types: EXISTS, ANY, ALL, scalar subqueries, ARRAY)
+- [x] SubPlan (planner subquery wrapper routed through deparse, falling back to its test expression)
+- [x] AlternativeSubPlan (planner alternative subplan wrapper emitting first choice when deparse recovers nothing)
 - [x] TableLikeClause (LIKE table_name for CREATE TABLE)
 - [x] TruncateStmt (TRUNCATE table [RESTART IDENTITY] [CASCADE])
 - [x] TypeCast (CAST(expr AS type))
@@ -887,7 +896,10 @@ pub(super) fn emit_select_stmt(e: &mut EventEmitter, n: &SelectStmt) {
 - [x] VariableShowStmt (SHOW variable)
 - [x] ViewStmt (CREATE [OR REPLACE] [TEMP] VIEW ... WITH (options) AS ... [WITH CHECK OPTION])
 - [x] WindowDef (window specifications with frame clauses, offsets, and exclusion handling)
+- [x] WindowClause (WINDOW clause definitions delegating to WindowDef formatting)
+- [x] WindowFunc (planner window function nodes delegated through the deparse bridge with safety fallback)
 - [x] WithClause (WITH [RECURSIVE] for Common Table Expressions)
+- [x] WithCheckOption (planner check option node emitted via deparse or raw qualifier when necessary)
 - [x] XmlExpr (XMLELEMENT, XMLCONCAT, XMLCOMMENT, XMLFOREST, XMLPI, XMLROOT functions)
 - [x] XmlSerialize (XMLSERIALIZE(DOCUMENT/CONTENT expr AS type))
 
@@ -932,6 +944,17 @@ Keep this section focused on durable guidance. When you add new insights, summar
 - Map `SelectStmt::limit_option` to `FETCH ... WITH TIES` when it resolves to `LimitOption::WithTies` so the re-parsed AST retains the original limit semantics.
 - When wrapping a `SelectStmt` inside outer statements (e.g. VIEW, COPY), emit it via `emit_select_stmt_no_semicolon` so trailing clauses can follow before the final semicolon.
 - Decode window frame bitmasks to render RANGE/ROWS/GROUPS with the correct UNBOUNDED/CURRENT/OFFSET bounds and guard PRECEDING/FOLLOWING against missing offsets.
+- Ordered-set aggregates must render `WITHIN GROUP (ORDER BY ...)` outside the argument list and emit `FILTER (WHERE ...)` ahead of any `OVER` clause so planner fallbacks reuse the same surface layout.
+
+**Planner Nodes (CRITICAL - Read Carefully)**:
+- **NEVER create synthetic nodes or wrap nodes in SELECT statements for deparse round-trips**. This violates the architecture and breaks AST preservation.
+- **NEVER call `pgt_query::deparse()` from emit functions**. The pretty printer must emit directly from AST nodes.
+- Planner nodes (OpExpr, Aggref, WindowFunc, FuncExpr, SubPlan, etc.) represent internal PostgreSQL optimizer structures with OIDs instead of names.
+- For planner nodes, emit simple fallback representations using OID placeholders (e.g., `op#123`, `func#456`, `agg#789`).
+- Example: `OpExpr` with args `[a, b]` and `opno=96` emits as `a op#96 b` - we don't have operator symbols without a catalog lookup.
+- `DistinctExpr` can emit `IS DISTINCT FROM` since the syntax is known; `NullIfExpr` can emit `NULLIF(a, b)` for the same reason.
+- Planner nodes indicate the pretty printer was given optimizer output rather than parser output - the fallback representations are acceptable.
+- When duplicating window frame logic between `WindowClause` and `WindowDef`, **copy and adapt the code directly** rather than creating synthetic nodes or calling helper functions that expect different node types.
 
 ### Logging Future Work
 - Capture new learnings as concise bullets here and keep detailed session history in commit messages or external notes.
@@ -987,6 +1010,7 @@ just ready
 2. Spot-check MergeStmt WHEN clause formatting and add focused tests around mixed UPDATE/INSERT/DELETE branches if gaps appear.
 3. Audit existing TypeCast/TypeName snapshots for INTERVAL usages to confirm the new typmod decoding matches legacy expectations before broader review.
 4. Once the outstanding snapshot churn is cleared, re-run `cargo test -p pgt_pretty_print test_multi__window_60 -- --show-output` to confirm the refreshed ViewStmt emitter no longer diff's the window fixture.
+5. Add multi-statement coverage exercising ordered-set aggregates with FILTER clauses to validate planner fallbacks alongside the new single-statement fixture.
 
 ## Summary: Key Points
 
@@ -1010,6 +1034,9 @@ just ready
 - **Don't modify** `tests/tests.rs` (test infrastructure - complete)
 - **Don't modify** `src/codegen/` (code generation - complete)
 - **Don't try to implement everything at once** - partial implementations are fine!
+- **NEVER create synthetic AST nodes** or wrap nodes in SELECT for deparse round-trips
+- **NEVER call `pgt_query::deparse()`** from emit functions - emit directly from AST
+- **NEVER create new node instances** to reuse helpers - copy/adapt code directly instead
 
 ### 🎯 Goals:
 - **~270 total nodes** to eventually implement

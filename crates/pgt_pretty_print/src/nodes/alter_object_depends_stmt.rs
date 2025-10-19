@@ -9,10 +9,10 @@ pub(super) fn emit_alter_object_depends_stmt(e: &mut EventEmitter, n: &AlterObje
     e.space();
 
     // Object type
-    let object_type_str = match ObjectType::try_from(n.object_type) {
-        Ok(ObjectType::ObjectFunction) => "FUNCTION",
-        Ok(ObjectType::ObjectProcedure) => "PROCEDURE",
-        Ok(ObjectType::ObjectRoutine) => "ROUTINE",
+    let object_type_str = match n.object_type() {
+        ObjectType::ObjectFunction => "FUNCTION",
+        ObjectType::ObjectProcedure => "PROCEDURE",
+        ObjectType::ObjectRoutine => "ROUTINE",
         _ => "UNKNOWN",
     };
     e.token(TokenKind::IDENT(object_type_str.to_string()));

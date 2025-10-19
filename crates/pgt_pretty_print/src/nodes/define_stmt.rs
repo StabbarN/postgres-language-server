@@ -59,7 +59,7 @@ pub(super) fn emit_define_stmt(e: &mut EventEmitter, n: &DefineStmt) {
 
     e.space();
 
-    let kind = ObjectType::try_from(n.kind).unwrap_or(ObjectType::Undefined);
+    let kind = n.kind();
     match kind {
         ObjectType::ObjectAggregate => e.token(TokenKind::AGGREGATE_KW),
         ObjectType::ObjectOperator => e.token(TokenKind::OPERATOR_KW),

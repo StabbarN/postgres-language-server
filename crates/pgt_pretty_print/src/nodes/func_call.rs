@@ -93,8 +93,36 @@ pub(super) fn emit_func_call(e: &mut EventEmitter, n: &FuncCall) {
         }
     }
 
-    // TODO: Handle WITHIN GROUP (for ordered-set aggregates)
-    // TODO: Handle FILTER clause
+    if n.agg_within_group {
+        debug_assert!(
+            !n.agg_order.is_empty(),
+            "ordered-set aggregate is missing ORDER BY list"
+        );
+
+        e.line(LineType::SoftOrSpace);
+        e.token(TokenKind::WITHIN_KW);
+        e.space();
+        e.token(TokenKind::GROUP_KW);
+        e.space();
+        e.token(TokenKind::L_PAREN);
+        e.token(TokenKind::ORDER_KW);
+        e.space();
+        e.token(TokenKind::BY_KW);
+        e.space();
+        emit_comma_separated_list(e, &n.agg_order, super::emit_node);
+        e.token(TokenKind::R_PAREN);
+    }
+
+    if let Some(ref filter) = n.agg_filter {
+        e.line(LineType::SoftOrSpace);
+        e.token(TokenKind::FILTER_KW);
+        e.space();
+        e.token(TokenKind::L_PAREN);
+        e.token(TokenKind::WHERE_KW);
+        e.space();
+        super::emit_node(filter, e);
+        e.token(TokenKind::R_PAREN);
+    }
 
     // Handle OVER clause (window functions)
     if let Some(ref over) = n.over {

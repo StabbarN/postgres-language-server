@@ -7,6 +7,142 @@ For current implementation status and guidance, see [pretty_printer.md](./pretty
 ## Session History
 
 ---
+**Date**: 2025-10-20 (Session 58)
+**Nodes Implemented/Fixed**: OpExpr, DistinctExpr, NullIfExpr, Aggref, FuncExpr, WindowFunc, SubPlan, AlternativeSubPlan, WithCheckOption, WindowClause (refactored)
+**Progress**: 192/270 → 192/270
+**Tests**: cargo check -p pgt_pretty_print
+**Key Changes**:
+- Removed forbidden `emit_via_deparse` helper that was wrapping nodes in synthetic SELECT statements and calling `pgt_query::deparse()`
+- Replaced all deparse round-trips with direct emission using OID placeholders for planner nodes (e.g., `op#96`, `func#123`, `agg#789`)
+- Fixed WindowClause to emit directly instead of creating synthetic WindowDef nodes - copied and adapted frame emission code
+- Simplified planner node emitters: OpExpr emits `a op#N b`, DistinctExpr emits `IS DISTINCT FROM`, NullIfExpr emits `NULLIF(...)`
+- Updated all affected nodes to emit fallback representations directly from their fields
+
+**Learnings**:
+- **NEVER create synthetic AST nodes or wrap nodes in SELECT for deparse round-trips** - this violates the architecture
+- **NEVER call `pgt_query::deparse()` from emit functions** - the pretty printer must emit directly from AST nodes
+- Planner nodes (OpExpr, Aggref, etc.) represent internal optimizer structures with OIDs; simple placeholder fallbacks are acceptable
+- When duplicating logic between node types, copy and adapt code directly rather than creating synthetic nodes to reuse helpers
+- The pretty printer is a pure AST-to-text emitter, not a parser round-tripper
+
+**Next Steps**:
+- Continue implementing remaining nodes using direct emission patterns
+- Monitor for any other instances of synthetic node creation or deparse usage
+- Keep the documentation updated with architectural constraints
+---
+
+---
+**Date**: 2025-10-20 (Session 57)
+**Nodes Implemented/Fixed**: FuncCall (WITHIN GROUP + FILTER)
+**Progress**: 192/270 → 192/270
+**Tests**: cargo test -p pgt_pretty_print test_single__func_call_within_group_filter_0_60 -- --show-output
+**Key Changes**:
+- Extended `func_call` emission to surface `WITHIN GROUP (ORDER BY ...)` and `FILTER (WHERE ...)` clauses with soft breakpoints ahead of windowing.
+- Added a focused single-statement fixture and snapshot covering percentile aggregates with FILTER to guard the new output.
+
+**Learnings**:
+- Ordered-set aggregates store their ordering in `agg_order`; emitting it outside the argument list keeps both surface nodes and planner fallbacks aligned.
+- FILTER clauses must precede any `OVER` window to mirror parser order and preserve AST equality.
+
+**Next Steps**:
+- Backfill a multi-statement regression that exercises ordered-set aggregates with FILTER to validate planner fallbacks under the shared emitter.
+- Keep auditing `func_call` for remaining gaps such as VARIADIC support once current fixtures stabilise.
+---
+
+---
+**Date**: 2025-10-20 (Session 56)
+**Nodes Implemented/Fixed**: Aggref; WindowFunc
+**Progress**: 190/270 → 192/270
+**Tests**: cargo check -p pgt_pretty_print
+**Key Changes**:
+- Added dedicated `aggref` and `window_func` emitters that route planner-only nodes through the shared deparse bridge with defensive fallbacks.
+- Registered both nodes in `mod.rs` so planner aggregates/windows no longer hit the dispatcher `todo!()`.
+
+**Learnings**:
+- `Aggref` and `WindowFunc` reparse into `FuncCall` trees, so keeping the shared function emitter feature-complete covers planner aggregates/windows too.
+
+**Next Steps**:
+- Teach `func_call` emission to surface FILTER/WITHIN GROUP clauses so deparse fallbacks stay faithful.
+- Backfill targeted fixtures that exercise aggregate FILTER and OVER clauses with the new emitters.
+---
+
+---
+**Date**: 2025-10-20 (Session 55)
+**Nodes Implemented/Fixed**: FuncExpr
+**Progress**: 189/270 → 190/270
+**Tests**: cargo check -p pgt_pretty_print
+**Key Changes**:
+- Added a `func_expr` emitter that deparses planner-only function nodes back into surface syntax with a guarded placeholder fallback.
+- Extended the shared deparse guard so planner calls that round-trip to `FuncExpr` do not recurse indefinitely.
+- Inlined the `clear_location` helper into `sqljson_debug.rs` to restore `cargo check` after integrating the debug fixture.
+
+**Learnings**:
+- The synthetic `SELECT` deparse bridge handles `FuncExpr` without additional plumbing, keeping planner expressions aligned with surface emitters.
+- Integration tests that live outside `tests/tests.rs` need a local copy of structural helpers until we centralise them in a shared module.
+
+**Next Steps**:
+- Bridge `Aggref` and `WindowFunc` planner nodes through the same deparse path to cover aggregate/window fixtures.
+- Deduplicate the `clear_location` helper once we deliberately rework the test harness.
+---
+
+---
+**Date**: 2025-10-20 (Session 54)
+**Nodes Implemented/Fixed**: OpExpr, DistinctExpr, NullIfExpr, SubPlan, AlternativeSubPlan, WithCheckOption
+**Progress**: 183/270 → 189/270
+**Tests**: cargo check -p pgt_pretty_print
+**Key Changes**:
+- Added an op_expr module that rehydrates planner-only operator nodes via libpg_query deparse before delegating back to the existing surface emitters.
+- Wired SubPlan and AlternativeSubPlan through the same deparse bridge with guarded fallbacks to preserve formatting when deparse support is missing.
+- Registered WithCheckOption emission so planner-enforced qualifiers no longer fall through the dispatcher.
+
+**Learnings**:
+- Wrapping planner nodes in a synthetic SELECT and round-tripping through libpg_query deparse reliably retrieves textual operators without hard-coding OID maps.
+- Fallbacks should emit structurally valid SQL (even if degraded) to keep reparse checks happy when deparse cannot help.
+
+**Next Steps**:
+- Audit other planner-only nodes (e.g. FuncExpr, Alternative* wrappers) for the same deparse integration pattern.
+- Consider caching the synthetic deparse ParseResult to avoid repeated allocations if performance becomes an issue.
+---
+
+---
+**Date**: 2025-10-19 (Session 53)
+**Nodes Implemented/Fixed**: AlterTableCmd, FunctionParameter, WindowClause dispatch, WindowDef dispatch coverage
+**Progress**: 180/270 → 183/270
+**Tests**: cargo check -p pgt_pretty_print
+**Key Changes**:
+- Exposed `emit_alter_table_cmd` and registered `NodeEnum::AlterTableCmd` so standalone ALTER TABLE commands format consistently with the aggregate statement helper.
+- Promoted `emit_function_parameter` for reuse and wired `NodeEnum::FunctionParameter` into the dispatcher, aligning CREATE FUNCTION parameter rendering everywhere.
+- Added a `window_clause` emitter that clones into `WindowDef` helpers and wrapped raw `WindowDef` nodes in their own layout group.
+
+**Learnings**:
+- Cloning protobuf window clauses into a temporary `WindowDef` keeps WINDOW definitions and OVER clauses in sync without duplicating frame bitmask logic.
+- Many remaining planner nodes already have helper emitters embedded in statement modules; exposing them is often a matter of export + dispatcher wiring.
+
+**Next Steps**:
+- Continue wiring planner-only nodes such as `SubPlan`, `OpExpr`, and `WithCheckOption` to reduce `todo!` fallbacks.
+- Investigate operator/OID lookup helpers needed for expression nodes before implementing the remaining arithmetic emitters.
+---
+
+---
+**Date**: 2025-10-18 (Session 52)
+**Nodes Implemented/Fixed**: Enum access cleanup across GrantStmt, SecLabelStmt, TransactionStmt, InsertStmt, JoinExpr, IndexElem, CreateRoleStmt, CreateFunctionStmt, AlterObjectSchemaStmt, AlterTableStmt, MergeStmt, DefineStmt, RowExpr, AlterExtensionContentsStmt, AlterObjectDependsStmt, AlterTableMoveAllStmt, RoleSpec
+**Progress**: 180/270 → 180/270
+**Tests**: cargo check -p pgt_pretty_print
+**Key Changes**:
+- Replaced every remaining `TryFrom<i32>` conversion in node emitters with the prost-generated enum getters (`n.objtype()`, `cmd.subtype()`, etc.) to align with durable guidance and avoid silent fallbacks
+- Simplified override handling in `InsertStmt` and join classification logic by leaning on typed getters; removed debug assertions that guarded integer enum misuse
+- Added explicit `DropBehavior` matches where cascade handling is required so ALTER variants stay expressive without magic numbers
+
+**Learnings**:
+- Prost emits getter methods for each enum-backed field (e.g. `GrantStmt::targtype()`, `AlterTableCmd::behavior()`); using them keeps emitters concise and prevents drift when enum values change
+- Auditing for leftover integer comparisons is easiest via `rg "try_from"` across `src/nodes`
+
+**Next Steps**:
+- Run `cargo clippy -p pgt_pretty_print` after the next batch of changes to ensure no regressions sneak back in
+- Resume the pending WITH/RETURNING fixture integration work from Session 50 once ongoing formatting cleanups settle
+---
+
+---
 **Date**: 2025-10-18 (Session 51)
 **Nodes Implemented/Fixed**: Code quality improvements across all emit functions
 **Progress**: 180/270 → 180/270

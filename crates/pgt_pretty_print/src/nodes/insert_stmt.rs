@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use crate::{
     TokenKind,
     emitter::{EventEmitter, GroupKind, LineType},
@@ -49,32 +47,24 @@ fn emit_insert_stmt_impl(e: &mut EventEmitter, n: &InsertStmt, with_semicolon: b
         e.token(TokenKind::R_PAREN);
     }
 
-    if let Ok(kind) = OverridingKind::try_from(n.r#override) {
-        match kind {
-            OverridingKind::OverridingUserValue => {
-                e.space();
-                e.token(TokenKind::OVERRIDING_KW);
-                e.space();
-                e.token(TokenKind::USER_KW);
-                e.space();
-                e.token(TokenKind::VALUE_KW);
-            }
-            OverridingKind::OverridingSystemValue => {
-                e.space();
-                e.token(TokenKind::OVERRIDING_KW);
-                e.space();
-                e.token(TokenKind::SYSTEM_KW);
-                e.space();
-                e.token(TokenKind::VALUE_KW);
-            }
-            OverridingKind::OverridingNotSet | OverridingKind::Undefined => {}
+    match n.r#override() {
+        OverridingKind::OverridingUserValue => {
+            e.space();
+            e.token(TokenKind::OVERRIDING_KW);
+            e.space();
+            e.token(TokenKind::USER_KW);
+            e.space();
+            e.token(TokenKind::VALUE_KW);
         }
-    } else {
-        debug_assert!(
-            n.r#override == 0 || n.r#override == 1,
-            "unexpected overriding kind {}",
-            n.r#override
-        );
+        OverridingKind::OverridingSystemValue => {
+            e.space();
+            e.token(TokenKind::OVERRIDING_KW);
+            e.space();
+            e.token(TokenKind::SYSTEM_KW);
+            e.space();
+            e.token(TokenKind::VALUE_KW);
+        }
+        OverridingKind::OverridingNotSet | OverridingKind::Undefined => {}
     }
 
     // Emit VALUES or SELECT or DEFAULT VALUES

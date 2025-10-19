@@ -29,11 +29,11 @@ pub(super) fn emit_alter_extension_contents_stmt(
     e.space();
 
     // Object type
-    let object_type_str = match ObjectType::try_from(n.objtype) {
-        Ok(ObjectType::ObjectTable) => "TABLE",
-        Ok(ObjectType::ObjectFunction) => "FUNCTION",
-        Ok(ObjectType::ObjectType) => "TYPE",
-        Ok(ObjectType::ObjectOperator) => "OPERATOR",
+    let object_type_str = match n.objtype() {
+        ObjectType::ObjectTable => "TABLE",
+        ObjectType::ObjectFunction => "FUNCTION",
+        ObjectType::ObjectType => "TYPE",
+        ObjectType::ObjectOperator => "OPERATOR",
         _ => "OBJECT",
     };
     e.token(TokenKind::IDENT(object_type_str.to_string()));

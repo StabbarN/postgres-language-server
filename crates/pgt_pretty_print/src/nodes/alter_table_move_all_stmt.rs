@@ -11,8 +11,7 @@ pub(super) fn emit_alter_table_move_all_stmt(e: &mut EventEmitter, n: &AlterTabl
     e.space();
 
     // Emit object type (TABLE, INDEX, MATERIALIZED VIEW)
-    let object_type = ObjectType::try_from(n.objtype).unwrap_or(ObjectType::Undefined);
-    match object_type {
+    match n.objtype() {
         ObjectType::ObjectTable => e.token(TokenKind::TABLE_KW),
         ObjectType::ObjectIndex => e.token(TokenKind::INDEX_KW),
         ObjectType::ObjectMatview => {

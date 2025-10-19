@@ -11,7 +11,7 @@ use super::string::{emit_identifier_maybe_quoted, emit_single_quoted_str};
 pub(super) fn emit_transaction_stmt(e: &mut EventEmitter, n: &TransactionStmt) {
     e.group_start(GroupKind::TransactionStmt);
 
-    let kind = TransactionStmtKind::try_from(n.kind).unwrap_or(TransactionStmtKind::Undefined);
+    let kind = n.kind();
 
     match kind {
         TransactionStmtKind::TransStmtBegin => {

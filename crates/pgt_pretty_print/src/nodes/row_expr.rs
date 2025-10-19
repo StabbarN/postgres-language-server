@@ -10,7 +10,7 @@ use super::node_list::emit_comma_separated_list;
 pub(super) fn emit_row_expr(e: &mut EventEmitter, n: &RowExpr) {
     e.group_start(GroupKind::RowExpr);
 
-    let format = CoercionForm::try_from(n.row_format).unwrap_or(CoercionForm::CoerceImplicitCast);
+    let format = n.row_format();
     let emit_row_keyword = matches!(
         format,
         CoercionForm::CoerceExplicitCall | CoercionForm::CoerceSqlSyntax

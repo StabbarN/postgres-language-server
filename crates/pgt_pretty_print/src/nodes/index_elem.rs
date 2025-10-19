@@ -30,8 +30,7 @@ pub(super) fn emit_index_elem(e: &mut EventEmitter, n: &IndexElem) {
     }
 
     // Sort order (ASC/DESC)
-    let ordering = SortByDir::try_from(n.ordering).unwrap_or(SortByDir::SortbyDefault);
-    match ordering {
+    match n.ordering() {
         SortByDir::SortbyAsc => {
             e.space();
             e.token(TokenKind::ASC_KW);
@@ -44,9 +43,7 @@ pub(super) fn emit_index_elem(e: &mut EventEmitter, n: &IndexElem) {
     }
 
     // NULLS FIRST/LAST
-    let nulls_ordering =
-        SortByNulls::try_from(n.nulls_ordering).unwrap_or(SortByNulls::SortbyNullsDefault);
-    match nulls_ordering {
+    match n.nulls_ordering() {
         SortByNulls::SortbyNullsFirst => {
             e.space();
             e.token(TokenKind::NULLS_KW);

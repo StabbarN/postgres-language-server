@@ -67,20 +67,17 @@ pub(super) fn emit_drop_stmt(e: &mut EventEmitter, n: &DropStmt) {
     // Object names
     if !n.objects.is_empty() {
         e.space();
-        emit_comma_separated_list(e, &n.objects, |node, e| {
-            // Objects can be:
-            // - List (qualified names like schema.table)
-            // - String (simple names)
-            // - ObjectWithArgs (for functions/operators)
-            // - TypeName (for types)
-
-            if let Some(pgt_query::NodeEnum::List(list)) = node.node.as_ref() {
-                // Qualified name: emit as schema.table
-                emit_dot_separated_identifiers(e, &list.items);
-            } else {
-                super::emit_node(node, e);
-            }
-        });
+        if n.remove_type == ObjectType::ObjectCast as i32 {
+            emit_comma_separated_list(e, &n.objects, emit_drop_cast_object);
+        } else {
+            emit_comma_separated_list(e, &n.objects, |node, e| {
+                if let Some(pgt_query::NodeEnum::List(list)) = node.node.as_ref() {
+                    emit_dot_separated_identifiers(e, &list.items);
+                } else {
+                    super::emit_node(node, e);
+                }
+            });
+        }
     }
 
     // CASCADE/RESTRICT
@@ -105,4 +102,22 @@ fn emit_dot_separated_identifiers(e: &mut EventEmitter, items: &[pgt_query::prot
             super::emit_node(item, e);
         }
     }
+}
+
+fn emit_drop_cast_object(node: &pgt_query::protobuf::Node, e: &mut EventEmitter) {
+    if let Some(pgt_query::NodeEnum::List(list)) = node.node.as_ref() {
+        if list.items.len() == 2 {
+            e.token(TokenKind::L_PAREN);
+            super::emit_node(&list.items[0], e);
+            e.space();
+            e.token(TokenKind::AS_KW);
+            e.space();
+            super::emit_node(&list.items[1], e);
+            e.token(TokenKind::R_PAREN);
+            return;
+        }
+    }
+
+    // Fallback for unexpected structure
+    super::emit_node(node, e);
 }

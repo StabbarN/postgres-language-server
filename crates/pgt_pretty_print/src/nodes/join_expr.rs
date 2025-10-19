@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use pgt_query::protobuf::{JoinExpr, JoinType};
 
 use crate::TokenKind;
@@ -33,7 +31,9 @@ pub(super) fn emit_join_expr(e: &mut EventEmitter, n: &JoinExpr) {
         emit_join_token(TokenKind::NATURAL_KW, e);
     }
 
-    match JoinType::try_from(n.jointype).unwrap_or(JoinType::JoinInner) {
+    let jointype = n.jointype();
+
+    match jointype {
         JoinType::JoinInner => {
             if !n.is_natural {
                 emit_join_token(TokenKind::INNER_KW, e);
@@ -115,7 +115,7 @@ pub(super) fn emit_join_expr(e: &mut EventEmitter, n: &JoinExpr) {
         e.indent_start();
         super::emit_node(quals, e);
         e.indent_end();
-    } else if n.jointype == JoinType::JoinInner as i32 && !n.is_natural {
+    } else if matches!(jointype, JoinType::JoinInner) && !n.is_natural {
         // For INNER JOIN without qualifications (converted from CROSS JOIN), add ON TRUE
         // This is semantically equivalent to CROSS JOIN
         e.line(LineType::SoftOrSpace);

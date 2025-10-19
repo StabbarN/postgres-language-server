@@ -83,11 +83,9 @@ pub(super) fn emit_create_function_stmt(e: &mut EventEmitter, n: &CreateFunction
     e.group_end();
 }
 
-fn emit_function_parameter(e: &mut EventEmitter, fp: &FunctionParameter) {
+pub(super) fn emit_function_parameter(e: &mut EventEmitter, fp: &FunctionParameter) {
     // Parameter mode (IN, OUT, INOUT, VARIADIC)
-    let mode =
-        FunctionParameterMode::try_from(fp.mode).unwrap_or(FunctionParameterMode::FuncParamDefault);
-    match mode {
+    match fp.mode() {
         FunctionParameterMode::FuncParamIn => {
             e.token(TokenKind::IN_KW);
             e.space();

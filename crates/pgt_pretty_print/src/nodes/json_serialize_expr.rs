@@ -2,20 +2,20 @@ use crate::{
     TokenKind,
     emitter::{EventEmitter, GroupKind},
 };
-use pgt_query::protobuf::JsonScalarExpr;
+use pgt_query::protobuf::JsonSerializeExpr;
 
-use super::json_value_expr::emit_json_output;
+use super::json_value_expr::{emit_json_output, emit_json_value_expr};
 
-pub(super) fn emit_json_scalar_expr(e: &mut EventEmitter, n: &JsonScalarExpr) {
-    e.group_start(GroupKind::JsonScalarExpr);
+pub(super) fn emit_json_serialize_expr(e: &mut EventEmitter, n: &JsonSerializeExpr) {
+    e.group_start(GroupKind::JsonSerializeExpr);
 
-    e.token(TokenKind::IDENT("JSON_SCALAR".to_string()));
+    e.token(TokenKind::IDENT("JSON_SERIALIZE".to_string()));
     e.token(TokenKind::L_PAREN);
 
     let mut has_content = false;
 
     if let Some(ref expr) = n.expr {
-        super::emit_node(expr, e);
+        emit_json_value_expr(e, expr);
         has_content = true;
     }
 

@@ -2,7 +2,9 @@ use crate::{
     TokenKind,
     emitter::{EventEmitter, GroupKind},
 };
-use pgt_query::protobuf::{AlterTableCmd, AlterTableStmt, AlterTableType, ObjectType};
+use pgt_query::protobuf::{
+    AlterTableCmd, AlterTableStmt, AlterTableType, DropBehavior, ObjectType,
+};
 
 use super::emit_node;
 
@@ -13,8 +15,7 @@ pub(super) fn emit_alter_table_stmt(e: &mut EventEmitter, n: &AlterTableStmt) {
     e.space();
 
     // Emit object type (TABLE, INDEX, etc.)
-    let object_type = ObjectType::try_from(n.objtype).unwrap_or(ObjectType::Undefined);
-    match object_type {
+    match n.objtype() {
         ObjectType::ObjectTable => e.token(TokenKind::TABLE_KW),
         ObjectType::ObjectIndex => e.token(TokenKind::INDEX_KW),
         ObjectType::ObjectView => e.token(TokenKind::VIEW_KW),
@@ -65,10 +66,8 @@ pub(super) fn emit_alter_table_stmt(e: &mut EventEmitter, n: &AlterTableStmt) {
     e.group_end();
 }
 
-fn emit_alter_table_cmd(e: &mut EventEmitter, cmd: &AlterTableCmd) {
-    let subtype = AlterTableType::try_from(cmd.subtype).unwrap_or(AlterTableType::Undefined);
-
-    match subtype {
+pub(super) fn emit_alter_table_cmd(e: &mut EventEmitter, cmd: &AlterTableCmd) {
+    match cmd.subtype() {
         AlterTableType::AtAddColumn => {
             e.token(TokenKind::ADD_KW);
             e.space();
@@ -92,8 +91,7 @@ fn emit_alter_table_cmd(e: &mut EventEmitter, cmd: &AlterTableCmd) {
                 e.space();
                 e.token(TokenKind::IDENT(cmd.name.clone()));
             }
-            // behavior: 0=Undefined, 1=DropRestrict, 2=DropCascade
-            if cmd.behavior == 2 {
+            if matches!(cmd.behavior(), DropBehavior::DropCascade) {
                 e.space();
                 e.token(TokenKind::CASCADE_KW);
             }
@@ -653,7 +651,7 @@ fn emit_alter_table_cmd(e: &mut EventEmitter, cmd: &AlterTableCmd) {
         }
         _ => {
             // Fallback for unimplemented subtypes
-            e.token(TokenKind::IDENT(format!("TODO: {:?}", subtype)));
+            e.token(TokenKind::IDENT(format!("TODO: {:?}", cmd.subtype())));
         }
     }
 }

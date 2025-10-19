@@ -1,4 +1,4 @@
-use pgt_query::protobuf::{GrantStmt, GrantTargetType, ObjectType};
+use pgt_query::protobuf::{DropBehavior, GrantStmt, GrantTargetType, ObjectType};
 
 use crate::{
     TokenKind,
@@ -44,11 +44,12 @@ pub(super) fn emit_grant_stmt(e: &mut EventEmitter, n: &GrantStmt) {
     e.space();
 
     // Target type and object type
-    let targtype = GrantTargetType::try_from(n.targtype).unwrap_or(GrantTargetType::Undefined);
+    let targtype = n.targtype();
+    let objtype = n.objtype();
+
     if let GrantTargetType::AclTargetAllInSchema = targtype {
         e.token(TokenKind::ALL_KW);
         e.space();
-        let objtype = ObjectType::try_from(n.objtype).unwrap_or(ObjectType::Undefined);
         match objtype {
             ObjectType::ObjectTable => {
                 e.token(TokenKind::IDENT("TABLES".to_string()));
@@ -73,7 +74,6 @@ pub(super) fn emit_grant_stmt(e: &mut EventEmitter, n: &GrantStmt) {
         e.token(TokenKind::SCHEMA_KW);
     } else if let GrantTargetType::AclTargetDefaults = targtype {
         // For ALTER DEFAULT PRIVILEGES, use plural object types
-        let objtype = ObjectType::try_from(n.objtype).unwrap_or(ObjectType::Undefined);
         match objtype {
             ObjectType::ObjectTable => {
                 e.token(TokenKind::IDENT("TABLES".to_string()));
@@ -101,7 +101,6 @@ pub(super) fn emit_grant_stmt(e: &mut EventEmitter, n: &GrantStmt) {
         e.space();
     } else {
         // Add explicit object type (singular)
-        let objtype = ObjectType::try_from(n.objtype).unwrap_or(ObjectType::Undefined);
         match objtype {
             ObjectType::ObjectTable => {
                 e.token(TokenKind::TABLE_KW);
@@ -183,8 +182,7 @@ pub(super) fn emit_grant_stmt(e: &mut EventEmitter, n: &GrantStmt) {
 
     // CASCADE/RESTRICT (for revoke)
     if !n.is_grant {
-        // behavior: 0=Undefined, 1=DropRestrict, 2=DropCascade
-        if n.behavior == 2 {
+        if matches!(n.behavior(), DropBehavior::DropCascade) {
             e.space();
             e.token(TokenKind::CASCADE_KW);
         }

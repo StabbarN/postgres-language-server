@@ -14,6 +14,7 @@ mod a_indices;
 mod a_indirection;
 mod a_star;
 mod access_priv;
+mod aggref;
 mod alias;
 mod alter_collation_stmt;
 mod alter_database_refresh_coll_stmt;
@@ -124,6 +125,7 @@ mod field_select;
 mod field_store;
 mod float;
 mod func_call;
+mod func_expr;
 mod grant_role_stmt;
 mod grant_stmt;
 mod grouping_func;
@@ -135,11 +137,17 @@ mod infer_clause;
 mod insert_stmt;
 mod integer;
 mod join_expr;
+mod json_agg_constructor;
+mod json_array_constructor;
 mod json_func_expr;
 mod json_is_predicate;
+mod json_key_value;
+mod json_object_constructor;
 mod json_parse_expr;
 mod json_scalar_expr;
+mod json_serialize_expr;
 mod json_table;
+mod json_value_expr;
 mod list;
 mod listen_stmt;
 mod load_stmt;
@@ -153,6 +161,7 @@ mod notify_stmt;
 mod null_test;
 mod object_with_args;
 mod on_conflict_clause;
+mod op_expr;
 mod param_ref;
 mod partition_bound_spec;
 mod partition_elem;
@@ -184,6 +193,7 @@ mod sort_by;
 mod sql_value_function;
 mod string;
 mod sub_link;
+mod sub_plan;
 mod table_like_clause;
 mod transaction_stmt;
 mod truncate_stmt;
@@ -196,7 +206,10 @@ mod vacuum_stmt;
 mod variable_set_stmt;
 mod variable_show_stmt;
 mod view_stmt;
+mod window_clause;
 mod window_def;
+mod window_func;
+mod with_check_option;
 mod with_clause;
 mod xml_expr;
 mod xml_serialize;
@@ -208,6 +221,7 @@ use a_indices::emit_a_indices;
 use a_indirection::emit_a_indirection;
 use a_star::emit_a_star;
 use access_priv::emit_access_priv;
+use aggref::emit_aggref;
 use alias::emit_alias;
 use alter_collation_stmt::emit_alter_collation_stmt;
 use alter_database_refresh_coll_stmt::emit_alter_database_refresh_coll_stmt;
@@ -236,7 +250,7 @@ use alter_stats_stmt::emit_alter_stats_stmt;
 use alter_subscription_stmt::emit_alter_subscription_stmt;
 use alter_system_stmt::emit_alter_system_stmt;
 use alter_table_move_all_stmt::emit_alter_table_move_all_stmt;
-use alter_table_stmt::emit_alter_table_stmt;
+use alter_table_stmt::{emit_alter_table_cmd, emit_alter_table_stmt};
 use alter_tablespace_options_stmt::emit_alter_tablespace_options_stmt;
 use alter_ts_configuration_stmt::emit_alter_ts_configuration_stmt;
 use alter_ts_dictionary_stmt::emit_alter_ts_dictionary_stmt;
@@ -276,7 +290,7 @@ use create_extension_stmt::emit_create_extension_stmt;
 use create_fdw_stmt::emit_create_fdw_stmt;
 use create_foreign_server_stmt::emit_create_foreign_server_stmt;
 use create_foreign_table_stmt::emit_create_foreign_table_stmt;
-use create_function_stmt::emit_create_function_stmt;
+use create_function_stmt::{emit_create_function_stmt, emit_function_parameter};
 use create_op_class_item::emit_create_op_class_item;
 use create_op_class_stmt::emit_create_op_class_stmt;
 use create_op_family_stmt::emit_create_op_family_stmt;
@@ -318,6 +332,7 @@ use field_select::emit_field_select;
 use field_store::emit_field_store;
 use float::emit_float;
 use func_call::emit_func_call;
+use func_expr::emit_func_expr;
 use grant_role_stmt::emit_grant_role_stmt;
 use grant_stmt::emit_grant_stmt;
 use grouping_func::emit_grouping_func;
@@ -329,11 +344,18 @@ use infer_clause::emit_infer_clause;
 use insert_stmt::{emit_insert_stmt, emit_insert_stmt_no_semicolon};
 use integer::emit_integer;
 use join_expr::emit_join_expr;
+use json_array_constructor::{
+    emit_json_array_agg, emit_json_array_constructor, emit_json_array_query_constructor,
+};
 use json_func_expr::emit_json_func_expr;
 use json_is_predicate::emit_json_is_predicate;
+use json_key_value::emit_json_key_value;
+use json_object_constructor::{emit_json_object_agg, emit_json_object_constructor};
 use json_parse_expr::emit_json_parse_expr;
 use json_scalar_expr::emit_json_scalar_expr;
+use json_serialize_expr::emit_json_serialize_expr;
 use json_table::emit_json_table;
+use json_value_expr::emit_json_value_expr;
 use list::emit_list;
 use listen_stmt::emit_listen_stmt;
 use load_stmt::emit_load_stmt;
@@ -346,6 +368,7 @@ use notify_stmt::emit_notify_stmt;
 use null_test::emit_null_test;
 use object_with_args::emit_object_with_args;
 use on_conflict_clause::emit_on_conflict_clause;
+use op_expr::{emit_distinct_expr, emit_null_if_expr, emit_op_expr};
 use param_ref::emit_param_ref;
 use partition_bound_spec::emit_partition_bound_spec;
 use partition_elem::emit_partition_elem;
@@ -380,6 +403,7 @@ use string::{
     emit_string_literal,
 };
 use sub_link::emit_sub_link;
+use sub_plan::{emit_alternative_sub_plan, emit_sub_plan};
 use table_like_clause::emit_table_like_clause;
 use transaction_stmt::emit_transaction_stmt;
 use truncate_stmt::emit_truncate_stmt;
@@ -392,12 +416,15 @@ use vacuum_stmt::emit_vacuum_stmt;
 use variable_set_stmt::emit_variable_set_stmt;
 use variable_show_stmt::emit_variable_show_stmt;
 use view_stmt::emit_view_stmt;
+use window_clause::emit_window_clause;
 use window_def::emit_window_def;
+use window_func::emit_window_func;
+use with_check_option::emit_with_check_option;
 use with_clause::emit_with_clause;
 use xml_expr::emit_xml_expr;
 use xml_serialize::emit_xml_serialize;
 
-use crate::emitter::EventEmitter;
+use crate::emitter::{EventEmitter, GroupKind};
 use pgt_query::{NodeEnum, protobuf::Node};
 
 pub fn emit_node(node: &Node, e: &mut EventEmitter) {
@@ -450,6 +477,10 @@ pub fn emit_node_enum(node: &NodeEnum, e: &mut EventEmitter) {
         NodeEnum::AIndices(n) => emit_a_indices(e, n),
         NodeEnum::AIndirection(n) => emit_a_indirection(e, n),
         NodeEnum::AExpr(n) => emit_a_expr(e, n),
+        NodeEnum::Aggref(n) => emit_aggref(e, n),
+        NodeEnum::OpExpr(n) => emit_op_expr(e, n),
+        NodeEnum::DistinctExpr(n) => emit_distinct_expr(e, n),
+        NodeEnum::NullIfExpr(n) => emit_null_if_expr(e, n),
         NodeEnum::ArrayCoerceExpr(n) => emit_array_coerce_expr(e, n),
         NodeEnum::AStar(n) => emit_a_star(e, n),
         NodeEnum::BoolExpr(n) => emit_bool_expr(e, n),
@@ -462,7 +493,9 @@ pub fn emit_node_enum(node: &NodeEnum, e: &mut EventEmitter) {
         NodeEnum::CoerceViaIo(n) => emit_coerce_via_io(e, n),
         NodeEnum::CollateClause(n) => emit_collate_clause(e, n),
         NodeEnum::CurrentOfExpr(n) => emit_current_of_expr(e, n),
+        NodeEnum::FuncExpr(n) => emit_func_expr(e, n),
         NodeEnum::FuncCall(n) => emit_func_call(e, n),
+        NodeEnum::FunctionParameter(n) => emit_function_parameter(e, n),
         NodeEnum::FieldSelect(n) => emit_field_select(e, n),
         NodeEnum::FieldStore(n) => emit_field_store(e, n),
         NodeEnum::GroupingFunc(n) => emit_grouping_func(e, n),
@@ -486,6 +519,8 @@ pub fn emit_node_enum(node: &NodeEnum, e: &mut EventEmitter) {
         NodeEnum::RangeFunction(n) => emit_range_function(e, n),
         NodeEnum::SortBy(n) => emit_sort_by(e, n),
         NodeEnum::SubLink(n) => emit_sub_link(e, n),
+        NodeEnum::SubPlan(n) => emit_sub_plan(e, n),
+        NodeEnum::AlternativeSubPlan(n) => emit_alternative_sub_plan(e, n),
         NodeEnum::List(n) => emit_list(e, n),
         NodeEnum::VariableSetStmt(n) => emit_variable_set_stmt(e, n),
         NodeEnum::VariableShowStmt(n) => emit_variable_show_stmt(e, n),
@@ -555,6 +590,7 @@ pub fn emit_node_enum(node: &NodeEnum, e: &mut EventEmitter) {
         NodeEnum::AlterSubscriptionStmt(n) => emit_alter_subscription_stmt(e, n),
         NodeEnum::AlterSystemStmt(n) => emit_alter_system_stmt(e, n),
         NodeEnum::AlterTableStmt(n) => emit_alter_table_stmt(e, n),
+        NodeEnum::AlterTableCmd(n) => emit_alter_table_cmd(e, n),
         NodeEnum::AlterTableMoveAllStmt(n) => emit_alter_table_move_all_stmt(e, n),
         NodeEnum::AlterTableSpaceOptionsStmt(n) => emit_alter_tablespace_options_stmt(e, n),
         NodeEnum::AlterTsconfigurationStmt(n) => emit_alter_ts_configuration_stmt(e, n),
@@ -584,8 +620,16 @@ pub fn emit_node_enum(node: &NodeEnum, e: &mut EventEmitter) {
         NodeEnum::JsonFuncExpr(n) => emit_json_func_expr(e, n),
         NodeEnum::JsonIsPredicate(n) => emit_json_is_predicate(e, n),
         NodeEnum::JsonParseExpr(n) => emit_json_parse_expr(e, n),
+        NodeEnum::JsonSerializeExpr(n) => emit_json_serialize_expr(e, n),
         NodeEnum::JsonScalarExpr(n) => emit_json_scalar_expr(e, n),
         NodeEnum::JsonTable(n) => emit_json_table(e, n),
+        NodeEnum::JsonValueExpr(n) => emit_json_value_expr(e, n),
+        NodeEnum::JsonKeyValue(n) => emit_json_key_value(e, n),
+        NodeEnum::JsonObjectConstructor(n) => emit_json_object_constructor(e, n),
+        NodeEnum::JsonArrayConstructor(n) => emit_json_array_constructor(e, n),
+        NodeEnum::JsonArrayQueryConstructor(n) => emit_json_array_query_constructor(e, n),
+        NodeEnum::JsonObjectAgg(n) => emit_json_object_agg(e, n),
+        NodeEnum::JsonArrayAgg(n) => emit_json_array_agg(e, n),
         NodeEnum::RangeTableFunc(n) => emit_range_table_func(e, n),
         NodeEnum::RangeTableSample(n) => emit_range_table_sample(e, n),
         NodeEnum::XmlExpr(n) => emit_xml_expr(e, n),
@@ -595,7 +639,15 @@ pub fn emit_node_enum(node: &NodeEnum, e: &mut EventEmitter) {
         NodeEnum::PublicationObjSpec(n) => emit_publication_obj_spec(e, n),
         NodeEnum::SecLabelStmt(n) => emit_sec_label_stmt(e, n),
         NodeEnum::SetOperationStmt(n) => emit_set_operation_stmt(e, n),
+        NodeEnum::WindowClause(n) => emit_window_clause(e, n),
+        NodeEnum::WindowFunc(n) => emit_window_func(e, n),
+        NodeEnum::WindowDef(n) => {
+            e.group_start(GroupKind::WindowDef);
+            emit_window_def(e, n);
+            e.group_end();
+        }
         NodeEnum::WithClause(n) => emit_with_clause(e, n),
+        NodeEnum::WithCheckOption(n) => emit_with_check_option(e, n),
         NodeEnum::CommonTableExpr(n) => emit_common_table_expr(e, n),
         _ => todo!("emit_node_enum: unhandled node type {:?}", node),
     }

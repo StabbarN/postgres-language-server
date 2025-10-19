@@ -76,9 +76,7 @@ fn emit_merge_when_clause(e: &mut EventEmitter, clause: &MergeWhenClause) {
     e.token(TokenKind::WHEN_KW);
     e.space();
 
-    let match_kind =
-        MergeMatchKind::try_from(clause.match_kind).unwrap_or(MergeMatchKind::Undefined);
-    match match_kind {
+    match clause.match_kind() {
         MergeMatchKind::MergeWhenMatched => {
             e.token(TokenKind::MATCHED_KW);
         }
@@ -112,8 +110,7 @@ fn emit_merge_when_clause(e: &mut EventEmitter, clause: &MergeWhenClause) {
     e.space();
 
     // Command (UPDATE, INSERT, DELETE, or DO NOTHING)
-    let cmd_type = CmdType::try_from(clause.command_type).unwrap_or(CmdType::Undefined);
-    match cmd_type {
+    match clause.command_type() {
         CmdType::CmdUpdate => {
             e.token(TokenKind::UPDATE_KW);
             e.space();
