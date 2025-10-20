@@ -7,9 +7,9 @@ SELECT
   prop,
   pg_indexam_has_property(a.oid,
   prop) AS "AM",
-  pg_index_has_property(CAST('onek_hundred' AS regclass),
+  pg_index_has_property(CAST('onek_hundred' AS REGCLASS),
   prop) AS "Index",
-  pg_index_column_has_property(CAST('onek_hundred' AS regclass),
+  pg_index_column_has_property(CAST('onek_hundred' AS REGCLASS),
   1,
   prop) AS "Column"
 FROM
@@ -41,9 +41,9 @@ SELECT
   prop,
   pg_indexam_has_property(a.oid,
   prop) AS "AM",
-  pg_index_has_property(CAST('gcircleind' AS regclass),
+  pg_index_has_property(CAST('gcircleind' AS REGCLASS),
   prop) AS "Index",
-  pg_index_column_has_property(CAST('gcircleind' AS regclass),
+  pg_index_column_has_property(CAST('gcircleind' AS REGCLASS),
   1,
   prop) AS "Column"
 FROM
@@ -73,25 +73,25 @@ ORDER BY ord;
 
 SELECT
   prop,
-  pg_index_column_has_property(CAST('onek_hundred' AS regclass),
+  pg_index_column_has_property(CAST('onek_hundred' AS REGCLASS),
   1,
   prop) AS "btree",
-  pg_index_column_has_property(CAST('hash_i4_index' AS regclass),
+  pg_index_column_has_property(CAST('hash_i4_index' AS REGCLASS),
   1,
   prop) AS "hash",
-  pg_index_column_has_property(CAST('gcircleind' AS regclass),
+  pg_index_column_has_property(CAST('gcircleind' AS REGCLASS),
   1,
   prop) AS "gist",
-  pg_index_column_has_property(CAST('sp_radix_ind' AS regclass),
+  pg_index_column_has_property(CAST('sp_radix_ind' AS REGCLASS),
   1,
   prop) AS "spgist_radix",
-  pg_index_column_has_property(CAST('sp_quad_ind' AS regclass),
+  pg_index_column_has_property(CAST('sp_quad_ind' AS REGCLASS),
   1,
   prop) AS "spgist_quad",
-  pg_index_column_has_property(CAST('botharrayidx' AS regclass),
+  pg_index_column_has_property(CAST('botharrayidx' AS REGCLASS),
   1,
   prop) AS "gin",
-  pg_index_column_has_property(CAST('brinidx' AS regclass),
+  pg_index_column_has_property(CAST('brinidx' AS REGCLASS),
   1,
   prop) AS "brin"
 FROM
@@ -110,17 +110,17 @@ ORDER BY ord;
 
 SELECT
   prop,
-  pg_index_has_property(CAST('onek_hundred' AS regclass),
+  pg_index_has_property(CAST('onek_hundred' AS REGCLASS),
   prop) AS "btree",
-  pg_index_has_property(CAST('hash_i4_index' AS regclass),
+  pg_index_has_property(CAST('hash_i4_index' AS REGCLASS),
   prop) AS "hash",
-  pg_index_has_property(CAST('gcircleind' AS regclass),
+  pg_index_has_property(CAST('gcircleind' AS REGCLASS),
   prop) AS "gist",
-  pg_index_has_property(CAST('sp_radix_ind' AS regclass),
+  pg_index_has_property(CAST('sp_radix_ind' AS REGCLASS),
   prop) AS "spgist",
-  pg_index_has_property(CAST('botharrayidx' AS regclass),
+  pg_index_has_property(CAST('botharrayidx' AS REGCLASS),
   prop) AS "gin",
-  pg_index_has_property(CAST('brinidx' AS regclass),
+  pg_index_has_property(CAST('brinidx' AS REGCLASS),
   prop) AS "brin"
 FROM
   unnest(CAST(ARRAY['clusterable',
@@ -168,7 +168,7 @@ SELECT
   col,
   prop)
 FROM
-  (VALUES (CAST('fooindex' AS regclass))) AS v1 (o),
+  (VALUES (CAST('fooindex' AS REGCLASS))) AS v1 (o),
   (VALUES (1,
   'orderable'),
   (2,
@@ -197,7 +197,7 @@ SELECT
   col,
   prop)
 FROM
-  (VALUES (CAST('foocover' AS regclass))) AS v1 (o),
+  (VALUES (CAST('foocover' AS REGCLASS))) AS v1 (o),
   (VALUES (1,
   'orderable'),
   (2,

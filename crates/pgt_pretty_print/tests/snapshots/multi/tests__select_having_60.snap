@@ -101,4 +101,4 @@ FROM
 WHERE 1 / a = 1
 HAVING 1 < 2;
 
-DROP TABLE "test_having"
+DROP TABLE "test_having";

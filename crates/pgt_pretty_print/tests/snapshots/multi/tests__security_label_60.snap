@@ -19,7 +19,7 @@ CREATE TABLE seclabel_tbl1 ( a INT, b TEXT );
 
 CREATE TABLE seclabel_tbl2 ( x INT, y TEXT );
 
-CREATE VIEW seclabel_view1 AS SELECT * FROM seclabel_tbl2;;
+CREATE VIEW seclabel_view1 AS SELECT * FROM seclabel_tbl2;
 
 CREATE FUNCTION seclabel_four() RETURNS INT AS 'SELECT 4' LANGUAGE "sql";
 
@@ -45,15 +45,15 @@ SECURITY LABEL ON ROLE regress_seclabel_user1 IS '...invalid label...';
 
 SECURITY LABEL ON ROLE regress_seclabel_user3 IS 'unclassified';
 
-DROP FUNCTION seclabel_four()
+DROP FUNCTION seclabel_four();
 
-DROP DOMAIN seclabel_domain
+DROP DOMAIN seclabel_domain;
 
-DROP VIEW "seclabel_view1"
+DROP VIEW "seclabel_view1";
 
-DROP TABLE "seclabel_tbl1"
+DROP TABLE "seclabel_tbl1";
 
-DROP TABLE "seclabel_tbl2"
+DROP TABLE "seclabel_tbl2";
 
 DROP ROLE regress_seclabel_user1;
 

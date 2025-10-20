@@ -211,9 +211,6 @@ fn clear_location(node: &mut pgt_query::NodeEnum) {
             pgt_query::NodeMut::WindowDef(n) => {
                 (*n).location = 0;
             }
-            pgt_query::NodeMut::TypeName(n) => {
-                (*n).location = 0;
-            }
             pgt_query::NodeMut::PartitionSpec(n) => {
                 (*n).location = 0;
             }
@@ -230,6 +227,63 @@ fn clear_location(node: &mut pgt_query::NodeEnum) {
                 (*n).location = 0;
             }
             pgt_query::NodeMut::XmlSerialize(n) => {
+                (*n).location = 0;
+            }
+            pgt_query::NodeMut::JsonArrayConstructor(n) => {
+                (*n).location = 0;
+            }
+            pgt_query::NodeMut::JsonObjectConstructor(n) => {
+                (*n).location = 0;
+            }
+            pgt_query::NodeMut::JsonAggConstructor(n) => {
+                (*n).location = 0;
+            }
+            pgt_query::NodeMut::JsonTable(n) => {
+                (*n).location = 0;
+                if let Some(context) = (*n).context_item.as_mut() {
+                    if let Some(format) = context.format.as_mut() {
+                        format.location = 0;
+                    }
+                }
+
+                for column in &mut (*n).columns {
+                    if let Some(pgt_query::NodeEnum::JsonTableColumn(col)) = column.node.as_mut() {
+                        col.location = 0;
+                        if let Some(format) = col.format.as_mut() {
+                            format.location = 0;
+                        }
+                    }
+                }
+            }
+            pgt_query::NodeMut::JsonTableColumn(n) => {
+                (*n).location = 0;
+                if let Some(format) = (*n).format.as_mut() {
+                    format.location = 0;
+                }
+            }
+            pgt_query::NodeMut::JsonTablePathSpec(n) => {
+                (*n).location = 0;
+                (*n).name_location = 0;
+            }
+            pgt_query::NodeMut::JsonValueExpr(n) => {
+                if let Some(format) = (*n).format.as_mut() {
+                    format.location = 0;
+                }
+            }
+            pgt_query::NodeMut::TypeName(n) => {
+                (*n).location = 0;
+
+                if (*n).names.len() == 2 {
+                    if let Some(pgt_query::NodeEnum::String(schema)) =
+                        (*n).names.first().and_then(|node| node.node.as_ref())
+                    {
+                        if schema.sval.eq_ignore_ascii_case("pg_catalog") {
+                            (*n).names.remove(0);
+                        }
+                    }
+                }
+            }
+            pgt_query::NodeMut::JsonBehavior(n) => {
                 (*n).location = 0;
             }
             pgt_query::NodeMut::AConst(n) => {

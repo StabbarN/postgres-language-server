@@ -3,7 +3,7 @@ source: crates/pgt_pretty_print/tests/tests.rs
 input_file: crates/pgt_pretty_print/tests/data/multi/oid_60.sql
 snapshot_kind: text
 ---
-CREATE TABLE oid_tbl ( f1 oid );
+CREATE TABLE oid_tbl ( f1 OID );
 
 INSERT INTO oid_tbl (f1) VALUES ('1234');
 
@@ -79,4 +79,4 @@ SELECT o.* FROM oid_tbl AS o WHERE o.f1 >= '1234';
 
 SELECT o.* FROM oid_tbl AS o WHERE o.f1 > '1234';
 
-DROP TABLE "oid_tbl"
+DROP TABLE "oid_tbl";

@@ -5,13 +5,19 @@ snapshot_kind: text
 ---
 LOAD 'regresslib';
 
-CREATE FUNCTION test1(INT) RETURNS INT LANGUAGE "c" AS 'nosuchfile';
+CREATE FUNCTION test1(
+  INT
+) RETURNS INT LANGUAGE "c" AS 'nosuchfile';
 
-CREATE FUNCTION test1(INT) RETURNS INT LANGUAGE "c" AS 'regresslib', 'nosuchsymbol';
+CREATE FUNCTION test1(
+  INT
+) RETURNS INT LANGUAGE "c" AS 'regresslib', 'nosuchsymbol';
 
 SELECT
   regexp_replace('LAST_ERROR_MESSAGE',
   'file ".*"',
   'file "..."');
 
-CREATE FUNCTION test1(INT) RETURNS INT LANGUAGE "internal" AS 'nosuch';
+CREATE FUNCTION test1(
+  INT
+) RETURNS INT LANGUAGE "internal" AS 'nosuch';

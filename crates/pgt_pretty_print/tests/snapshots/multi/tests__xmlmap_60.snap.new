@@ -5,10 +5,7 @@ input_file: crates/pgt_pretty_print/tests/data/multi/xmlmap_60.sql
 ---
 CREATE SCHEMA "testxmlschema";
 
-CREATE TABLE testxmlschema.test1 (
-  a pg_catalog.int4,
-  b text
-);
+CREATE TABLE testxmlschema.test1 ( a INT, b TEXT );
 
 INSERT INTO testxmlschema.test1
 VALUES (1,
@@ -18,27 +15,27 @@ VALUES (1,
 (-1,
 NULL);
 
-CREATE DOMAIN testxmldomain AS pg_catalog.varchar;
+CREATE DOMAIN testxmldomain AS VARCHAR;
 
 CREATE TABLE testxmlschema.test2 (
-  z pg_catalog.int4,
-  y pg_catalog.varchar(500),
-  x pg_catalog.bpchar(6),
-  w pg_catalog.numeric(9,
+  z INT,
+  y VARCHAR(500),
+  x CHAR(6),
+  w NUMERIC(9,
   2),
-  v pg_catalog.int2,
-  u pg_catalog.int8,
-  t pg_catalog.float4,
-  s pg_catalog.time,
-  stz timetz,
-  r pg_catalog.timestamp,
-  rtz timestamptz,
-  q date,
-  p xml,
+  v SMALLINT,
+  u BIGINT,
+  t REAL,
+  s TIME,
+  stz TIME WITH TIME ZONE,
+  r TIMESTAMP,
+  rtz TIMESTAMP WITH TIME ZONE,
+  q DATE,
+  p XML,
   o testxmldomain,
-  n bool,
-  m bytea,
-  aaa text
+  n BOOLEAN,
+  m BYTEA,
+  aaa TEXT
 );
 
 ALTER TABLE testxmlschema.test2 DROP COLUMN aaa;

@@ -32,8 +32,8 @@ pub(super) fn emit_aggref(e: &mut EventEmitter, n: &Aggref) {
             e.space();
         }
 
-        emitted_any |= emit_node_sequence(e, &n.aggdirectargs, emitted_any);
-        emitted_any |= emit_node_sequence(e, &n.args, emitted_any);
+        emitted_any = emit_node_sequence(e, &n.aggdirectargs, emitted_any);
+        emit_node_sequence(e, &n.args, emitted_any);
     }
 
     e.token(TokenKind::R_PAREN);

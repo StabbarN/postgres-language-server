@@ -48,7 +48,7 @@ pub(super) fn emit_create_cast_stmt(e: &mut EventEmitter, n: &CreateCastStmt) {
     }
 
     // Context: 0=IMPLICIT, 1=ASSIGNMENT, 2=EXPLICIT
-    match CoercionContext::from_i32(n.context).unwrap_or(CoercionContext::Undefined) {
+    match n.context() {
         CoercionContext::CoercionImplicit => {
             e.line(LineType::SoftOrSpace);
             e.token(TokenKind::AS_KW);

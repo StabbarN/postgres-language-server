@@ -6,4 +6,6 @@ snapshot_kind: text
 SELECT
   *
 FROM
-  users AS u INNER JOIN orders AS o ON u.id = o.user_id;
+  users AS u
+  INNER JOIN orders AS o
+  ON u.id = o.user_id;

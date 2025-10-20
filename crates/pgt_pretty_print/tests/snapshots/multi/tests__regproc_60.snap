@@ -83,48 +83,48 @@ SELECT to_regdatabase('template1');
 
 SELECT to_regdatabase('"template1"');
 
-SELECT CAST(regproc('-') AS oid);
+SELECT CAST(regproc('-') AS OID);
 
-SELECT CAST(regprocedure('-') AS oid);
+SELECT CAST(regprocedure('-') AS OID);
 
-SELECT CAST(regclass('-') AS oid);
+SELECT CAST(regclass('-') AS OID);
 
-SELECT CAST(regcollation('-') AS oid);
+SELECT CAST(regcollation('-') AS OID);
 
-SELECT CAST(regtype('-') AS oid);
+SELECT CAST(regtype('-') AS OID);
 
-SELECT CAST(regconfig('-') AS oid);
+SELECT CAST(regconfig('-') AS OID);
 
-SELECT CAST(regdictionary('-') AS oid);
+SELECT CAST(regdictionary('-') AS OID);
 
-SELECT CAST(regrole('-') AS oid);
+SELECT CAST(regrole('-') AS OID);
 
-SELECT CAST(regnamespace('-') AS oid);
+SELECT CAST(regnamespace('-') AS OID);
 
-SELECT CAST(regdatabase('-') AS oid);
+SELECT CAST(regdatabase('-') AS OID);
 
-SELECT CAST(to_regproc('-') AS oid);
+SELECT CAST(to_regproc('-') AS OID);
 
-SELECT CAST(to_regprocedure('-') AS oid);
+SELECT CAST(to_regprocedure('-') AS OID);
 
-SELECT CAST(to_regclass('-') AS oid);
+SELECT CAST(to_regclass('-') AS OID);
 
-SELECT CAST(to_regcollation('-') AS oid);
+SELECT CAST(to_regcollation('-') AS OID);
 
-SELECT CAST(to_regtype('-') AS oid);
+SELECT CAST(to_regtype('-') AS OID);
 
-SELECT CAST(to_regrole('-') AS oid);
+SELECT CAST(to_regrole('-') AS OID);
 
-SELECT CAST(to_regnamespace('-') AS oid);
+SELECT CAST(to_regnamespace('-') AS OID);
 
-SELECT CAST(to_regdatabase('-') AS oid);
+SELECT CAST(to_regdatabase('-') AS OID);
 
 CREATE TABLE regrole_test (
-  rolid oid DEFAULT CAST('regress_regrole_test' AS regrole)
+  rolid OID DEFAULT CAST('regress_regrole_test' AS regrole)
 );
 
 CREATE TABLE regdatabase_test (
-  datid oid DEFAULT CAST('template1' AS regdatabase)
+  datid OID DEFAULT CAST('template1' AS regdatabase)
 );
 
 DROP ROLE regress_regrole_test;

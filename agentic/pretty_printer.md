@@ -923,6 +923,7 @@ Keep this section focused on durable guidance. When you add new insights, summar
 - **Run `cargo clippy -p pgt_pretty_print` regularly** and fix warnings. Use `--fix --allow-dirty` to auto-fix most style issues.
 - Avoid `TryFrom` patterns when the protobuf node provides direct accessor methods.
 - Replace `if` chains with `match` for cleaner enum handling.
+- Extend the snapshot harness' `clear_location` helper whenever new node families land so AST equality remains deterministic.
 
 **String and Identifier Handling**:
 - Reuse the helpers in `src/nodes/string.rs` for identifiers, keywords, and literals—avoid ad-hoc `TokenKind::IDENT` strings or manual quoting.
@@ -931,6 +932,7 @@ Keep this section focused on durable guidance. When you add new insights, summar
 **Type Normalization**:
 - Normalize TypeName built-ins by mapping `pg_catalog` identifiers to canonical SQL keywords while leaving user-defined schemas untouched.
 - Decode INTERVAL typmods by interpreting the range bitmask in `typmods[0]` before emitting optional second precision so layouts like `INTERVAL DAY TO SECOND(3)` stay canonical.
+- When the protobuf stores a single-component builtin (for example `bool` or `text`) without an explicit schema, keep the original casing and avoid reintroducing a `pg_catalog` qualifier so AST equality stays stable after reparse.
 
 **Layout and Formatting**:
 - Insert a `LineType::SoftOrSpace` breakpoint between join inputs and their qualifiers so long `ON` predicates can wrap without violating the target width while short joins stay single-line.
@@ -945,6 +947,7 @@ Keep this section focused on durable guidance. When you add new insights, summar
 - When wrapping a `SelectStmt` inside outer statements (e.g. VIEW, COPY), emit it via `emit_select_stmt_no_semicolon` so trailing clauses can follow before the final semicolon.
 - Decode window frame bitmasks to render RANGE/ROWS/GROUPS with the correct UNBOUNDED/CURRENT/OFFSET bounds and guard PRECEDING/FOLLOWING against missing offsets.
 - Ordered-set aggregates must render `WITHIN GROUP (ORDER BY ...)` outside the argument list and emit `FILTER (WHERE ...)` ahead of any `OVER` clause so planner fallbacks reuse the same surface layout.
+- For `MergeStmt`, only append `BY TARGET` when the clause has no predicate (the `DO NOTHING` branch); conditional branches should stay as bare `WHEN NOT MATCHED` so we don't rewrite user intent.
 
 **Planner Nodes (CRITICAL - Read Carefully)**:
 - **NEVER create synthetic nodes or wrap nodes in SELECT statements for deparse round-trips**. This violates the architecture and breaks AST preservation.
@@ -1006,11 +1009,7 @@ just ready
 
 ## Next Steps
 
-1. Fold the new INSERT/UPDATE/DELETE WITH ... RETURNING fixtures into routine CI runs so regressions surface early.
-2. Spot-check MergeStmt WHEN clause formatting and add focused tests around mixed UPDATE/INSERT/DELETE branches if gaps appear.
-3. Audit existing TypeCast/TypeName snapshots for INTERVAL usages to confirm the new typmod decoding matches legacy expectations before broader review.
-4. Once the outstanding snapshot churn is cleared, re-run `cargo test -p pgt_pretty_print test_multi__window_60 -- --show-output` to confirm the refreshed ViewStmt emitter no longer diff's the window fixture.
-5. Add multi-statement coverage exercising ordered-set aggregates with FILTER clauses to validate planner fallbacks alongside the new single-statement fixture.
+1. Investigate the remaining line-length failure in `test_multi__window_60`; the embedded `CREATE FUNCTION` body still emits a long SQL string that blows past the 60-column budget, so we either need a smarter break in the ViewStmt emitter or a harness carve-out for multiline literals.
 
 ## Summary: Key Points
 

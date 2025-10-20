@@ -3,50 +3,50 @@ source: crates/pgt_pretty_print/tests/tests.rs
 input_file: crates/pgt_pretty_print/tests/data/multi/macaddr8_60.sql
 snapshot_kind: text
 ---
-SELECT CAST('08:00:2b:01:02:03     ' AS macaddr8);
+SELECT CAST('08:00:2b:01:02:03     ' AS MACADDR8);
 
-SELECT CAST('    08:00:2b:01:02:03     ' AS macaddr8);
+SELECT CAST('    08:00:2b:01:02:03     ' AS MACADDR8);
 
-SELECT CAST('    08:00:2b:01:02:03' AS macaddr8);
+SELECT CAST('    08:00:2b:01:02:03' AS MACADDR8);
 
-SELECT CAST('08:00:2b:01:02:03:04:05     ' AS macaddr8);
+SELECT CAST('08:00:2b:01:02:03:04:05     ' AS MACADDR8);
 
-SELECT CAST('    08:00:2b:01:02:03:04:05     ' AS macaddr8);
+SELECT CAST('    08:00:2b:01:02:03:04:05     ' AS MACADDR8);
 
-SELECT CAST('    08:00:2b:01:02:03:04:05' AS macaddr8);
+SELECT CAST('    08:00:2b:01:02:03:04:05' AS MACADDR8);
 
-SELECT CAST('123    08:00:2b:01:02:03' AS macaddr8);
+SELECT CAST('123    08:00:2b:01:02:03' AS MACADDR8);
 
-SELECT CAST('08:00:2b:01:02:03  123' AS macaddr8);
+SELECT CAST('08:00:2b:01:02:03  123' AS MACADDR8);
 
-SELECT CAST('123    08:00:2b:01:02:03:04:05' AS macaddr8);
+SELECT CAST('123    08:00:2b:01:02:03:04:05' AS MACADDR8);
 
-SELECT CAST('08:00:2b:01:02:03:04:05  123' AS macaddr8);
+SELECT CAST('08:00:2b:01:02:03:04:05  123' AS MACADDR8);
 
-SELECT CAST('08:00:2b:01:02:03:04:05:06:07' AS macaddr8);
+SELECT CAST('08:00:2b:01:02:03:04:05:06:07' AS MACADDR8);
 
-SELECT CAST('08-00-2b-01-02-03-04-05-06-07' AS macaddr8);
+SELECT CAST('08-00-2b-01-02-03-04-05-06-07' AS MACADDR8);
 
-SELECT CAST('08002b:01020304050607' AS macaddr8);
+SELECT CAST('08002b:01020304050607' AS MACADDR8);
 
-SELECT CAST('08002b01020304050607' AS macaddr8);
+SELECT CAST('08002b01020304050607' AS MACADDR8);
 
-SELECT CAST('0z002b0102030405' AS macaddr8);
+SELECT CAST('0z002b0102030405' AS MACADDR8);
 
-SELECT CAST('08002b010203xyza' AS macaddr8);
+SELECT CAST('08002b010203xyza' AS MACADDR8);
 
-SELECT CAST('08:00-2b:01:02:03:04:05' AS macaddr8);
+SELECT CAST('08:00-2b:01:02:03:04:05' AS MACADDR8);
 
-SELECT CAST('08:00-2b:01:02:03:04:05' AS macaddr8);
+SELECT CAST('08:00-2b:01:02:03:04:05' AS MACADDR8);
 
-SELECT CAST('08:00:2b:01.02:03:04:05' AS macaddr8);
+SELECT CAST('08:00:2b:01.02:03:04:05' AS MACADDR8);
 
-SELECT CAST('08:00:2b:01.02:03:04:05' AS macaddr8);
+SELECT CAST('08:00:2b:01.02:03:04:05' AS MACADDR8);
 
 SELECT
-  macaddr8_set7bit(CAST('00:08:2b:01:02:03' AS macaddr8));
+  macaddr8_set7bit(CAST('00:08:2b:01:02:03' AS MACADDR8));
 
-CREATE TABLE macaddr8_data ( a INT, b macaddr8 );
+CREATE TABLE macaddr8_data ( a INT, b MACADDR8 );
 
 INSERT INTO macaddr8_data VALUES (1, '08:00:2b:01:02:03');
 
@@ -123,13 +123,13 @@ FROM
 WHERE a = 1;
 
 SELECT
-  CAST(b AS macaddr) <= '08:00:2b:01:02:04'
+  CAST(b AS MACADDR) <= '08:00:2b:01:02:04'
 FROM
   macaddr8_data
 WHERE a = 1;
 
 SELECT
-  CAST(b AS macaddr) >= '08:00:2b:01:02:04'
+  CAST(b AS MACADDR) >= '08:00:2b:01:02:04'
 FROM
   macaddr8_data
 WHERE a = 1;
@@ -141,13 +141,13 @@ FROM
 WHERE a = 1;
 
 SELECT
-  CAST(b AS macaddr) <> CAST('08:00:2b:01:02:04' AS macaddr)
+  CAST(b AS MACADDR) <> CAST('08:00:2b:01:02:04' AS MACADDR)
 FROM
   macaddr8_data
 WHERE a = 1;
 
 SELECT
-  CAST(b AS macaddr) <> CAST('08:00:2b:01:02:03' AS macaddr)
+  CAST(b AS MACADDR) <> CAST('08:00:2b:01:02:03' AS MACADDR)
 FROM
   macaddr8_data
 WHERE a = 1;
@@ -200,13 +200,13 @@ FROM
   macaddr8_data
 WHERE a = 15;
 
-SELECT  ~ b FROM macaddr8_data;
+SELECT ~b FROM macaddr8_data;
 
 SELECT b & '00:00:00:ff:ff:ff' FROM macaddr8_data;
 
 SELECT b | '01:02:03:04:05:06' FROM macaddr8_data;
 
-DROP TABLE "macaddr8_data"
+DROP TABLE "macaddr8_data";
 
 SELECT
   pg_input_is_valid('08:00:2b:01:02:03:04:ZZ',

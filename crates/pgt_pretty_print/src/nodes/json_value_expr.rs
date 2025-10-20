@@ -42,11 +42,7 @@ pub(super) fn emit_json_output(e: &mut EventEmitter, output: &JsonOutput, has_co
 }
 
 pub(super) fn emit_json_format(e: &mut EventEmitter, format: &JsonFormat) {
-    let format_type =
-        JsonFormatType::from_i32(format.format_type).unwrap_or(JsonFormatType::Undefined);
-    let encoding = JsonEncoding::from_i32(format.encoding).unwrap_or(JsonEncoding::Undefined);
-
-    match format_type {
+    match format.format_type() {
         JsonFormatType::JsFormatJson => {
             e.space();
             e.token(TokenKind::FORMAT_KW);
@@ -62,7 +58,7 @@ pub(super) fn emit_json_format(e: &mut EventEmitter, format: &JsonFormat) {
         JsonFormatType::Undefined | JsonFormatType::JsFormatDefault => {}
     }
 
-    match encoding {
+    match format.encoding() {
         JsonEncoding::JsEncUtf8 => emit_encoding(e, "UTF8"),
         JsonEncoding::JsEncUtf16 => emit_encoding(e, "UTF16"),
         JsonEncoding::JsEncUtf32 => emit_encoding(e, "UTF32"),

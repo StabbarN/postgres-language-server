@@ -93,6 +93,12 @@ fn emit_merge_when_clause(e: &mut EventEmitter, clause: &MergeWhenClause) {
             e.token(TokenKind::NOT_KW);
             e.space();
             e.token(TokenKind::MATCHED_KW);
+            if clause.condition.is_none() {
+                e.space();
+                e.token(TokenKind::BY_KW);
+                e.space();
+                e.token(TokenKind::IDENT("TARGET".to_string()));
+            }
         }
         _ => {}
     }

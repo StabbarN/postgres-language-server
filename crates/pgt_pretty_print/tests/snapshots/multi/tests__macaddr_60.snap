@@ -3,7 +3,7 @@ source: crates/pgt_pretty_print/tests/tests.rs
 input_file: crates/pgt_pretty_print/tests/data/multi/macaddr_60.sql
 snapshot_kind: text
 ---
-CREATE TABLE macaddr_data ( a INT, b macaddr );
+CREATE TABLE macaddr_data ( a INT, b MACADDR );
 
 INSERT INTO macaddr_data VALUES (1, '08:00:2b:01:02:03');
 
@@ -89,13 +89,13 @@ FROM
   macaddr_data
 WHERE a = 1;
 
-SELECT  ~ b FROM macaddr_data;
+SELECT ~b FROM macaddr_data;
 
 SELECT b & '00:00:00:ff:ff:ff' FROM macaddr_data;
 
 SELECT b | '01:02:03:04:05:06' FROM macaddr_data;
 
-DROP TABLE "macaddr_data"
+DROP TABLE "macaddr_data";
 
 SELECT pg_input_is_valid('08:00:2b:01:02:ZZ', 'macaddr');
 
