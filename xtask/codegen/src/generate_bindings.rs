@@ -10,12 +10,14 @@ use biome_js_syntax::{
 };
 use biome_rowan::AstNode;
 use biome_string_case::Case;
-use pgt_workspace::workspace_types::{generate_type, methods, ModuleQueue};
+use pgls_workspace::workspace_types::{generate_type, methods, ModuleQueue};
 use xtask::{project_root, Mode, Result};
 
 pub fn generate_bindings(mode: Mode) -> Result<()> {
-    let bindings_path =
+    let bindings_path_postgrestools =
         project_root().join("packages/@postgrestools/backend-jsonrpc/src/workspace.ts");
+    let bindings_path_postgres_language_server =
+        project_root().join("packages/@postgres-language-server/backend-jsonrpc/src/workspace.ts");
     let methods = methods();
 
     let mut declarations = Vec::new();
@@ -196,7 +198,7 @@ pub fn generate_bindings(mode: Mode) -> Result<()> {
     items.extend(declarations.into_iter().map(|(decl, description)| {
         let mut export = make::token(T![export]);
         if let Some(description) = description {
-            let comment = format!("/**\n\t* {} \n\t */\n", description);
+            let comment = format!("/**\n\t* {description} \n\t */\n");
             let trivia = vec![
                 (TriviaPieceKind::Newline, "\n"),
                 (TriviaPieceKind::MultiLineComment, comment.as_str()),
@@ -429,7 +431,9 @@ pub fn generate_bindings(mode: Mode) -> Result<()> {
     let printed = formatted.print().unwrap();
     let code = printed.into_code();
 
-    update(&bindings_path, &code, &mode)?;
+    // Generate for both packages (dual publishing)
+    update(&bindings_path_postgrestools, &code, &mode)?;
+    update(&bindings_path_postgres_language_server, &code, &mode)?;
 
     Ok(())
 }

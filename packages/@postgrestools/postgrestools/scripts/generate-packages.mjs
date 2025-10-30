@@ -219,6 +219,35 @@ function copySchemaToNativePackage(platform, arch) {
 	fs.chmodSync(schemaTarget, 0o666);
 }
 
+function copyReadmeToPackage(packagePath) {
+	const packageRoot = resolve(PACKAGES_POSTGRESTOOLS_ROOT, packagePath);
+	const readmeSrc = resolve(POSTGRESTOOLS_ROOT, "README.md");
+	const readmeTarget = resolve(packageRoot, "README.md");
+
+	if (!fs.existsSync(readmeSrc)) {
+		console.error(`README.md not found at: ${readmeSrc}`);
+		process.exit(1);
+	}
+
+	console.info(`Copying README.md to ${packagePath}`);
+	
+	// Read the original README content
+	const originalReadme = fs.readFileSync(readmeSrc, 'utf-8');
+	
+	// Add deprecation notice for @postgrestools packages
+	const deprecationNotice = `> [!WARNING]
+> **This package is deprecated.** Please use [\`@postgres-language-server/cli\`](https://www.npmjs.com/package/@postgres-language-server/cli) instead.
+>
+> The \`@postgrestools\` namespace is being phased out in favor of \`@postgres-language-server\`. All future updates and development will happen in the new package.
+
+`;
+
+	const modifiedReadme = deprecationNotice + originalReadme;
+	
+	fs.writeFileSync(readmeTarget, modifiedReadme, 'utf-8');
+	fs.chmodSync(readmeTarget, 0o666);
+}
+
 const rootManifest = () =>
 	JSON.parse(fs.readFileSync(MANIFEST_PATH).toString("utf-8"));
 
@@ -261,6 +290,10 @@ function getVersion(releaseTag, isPrerelease) {
 	const version = getVersion(releaseTag, isPrerelease);
 	await writeManifest("postgrestools", version);
 	await writeManifest("backend-jsonrpc", version);
+
+	// Copy README to main packages
+	copyReadmeToPackage("postgrestools");
+	copyReadmeToPackage("backend-jsonrpc");
 
 	for (const { platform, arch } of platformArchCombinations()) {
 		const os = getOs(platform);
